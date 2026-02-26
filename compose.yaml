@@ -1,0 +1,42 @@
+services:
+  uki-build:
+    build: .
+    image: uki-build:alpine
+    container_name: uki-build
+    user: "${LOCAL_UID}:${LOCAL_GID}"
+    volumes:
+      - ../private/shared/infra/target-root:/mnt/target
+      - ${HOME}/sbkeys/db.key:/tmp/db.key:ro
+      - ${HOME}/sbkeys/db.crt:/tmp/db.crt:ro
+      - ${HOME}/sbkeys/linuxaa64.efi.stub:/tmp/linuxaa64.efi.stub:ro
+    restart: "no"
+
+  prepare-target:
+    image: alpine:3.23
+    # run as root (default)
+    environment:
+      LOCAL_UID: "${LOCAL_UID}"
+      LOCAL_GID: "${LOCAL_GID}"
+    volumes:
+      - ../private/shared/infra/target-root:/mnt/target
+      - ../private/shared/infra/kernel/out:/in:ro
+    entrypoint: ["/bin/sh", "-lc"]
+    command:
+      - >
+        set -eux;
+        rm -rf /mnt/target/*;
+        mkdir -p /mnt/target/etc /mnt/target/boot;
+        keyname="$$(tar -tf /in/linux-ec2-tpm-latest.apk | sed -n 's/^\.SIGN\.RSA\.//p' | head -n 1)";
+        mkdir -p /etc/apk/keys;
+        install -m 0644 /in/linux-ec2-tpm-latest.pub "/etc/apk/keys/$$keyname";
+        apk update;
+        apk add --no-cache /in/linux-ec2-tpm-latest.apk;
+        cp -L /etc/os-release /mnt/target/etc/os-release;
+        cp -a /boot/vmlinuz-tpm-ec2 /mnt/target/boot/vmlinuz-tpm-ec2;
+        cp -a /boot/initramfs-tpm-ec2 /mnt/target/boot/initramfs-tpm-ec2;
+        chown "$$LOCAL_UID:$$LOCAL_GID" /mnt/target;
+        chown "$$LOCAL_UID:$$LOCAL_GID" /mnt/target/etc;
+        chown "$$LOCAL_UID:$$LOCAL_GID" /mnt/target/boot;
+        chown "$$LOCAL_UID:$$LOCAL_GID" /mnt/target/etc/os-release;
+        chown "$$LOCAL_UID:$$LOCAL_GID" /mnt/target/boot/vmlinuz-tpm-ec2;
+        chown "$$LOCAL_UID:$$LOCAL_GID" /mnt/target/boot/initramfs-tpm-ec2;
