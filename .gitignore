@@ -1,2 +1,10 @@
 #private is a symlink and is not ignored
 private/
+
+# abuild / alpine packaging artifacts
+src/
+pkg/
+tmp/
+*.apk
+*.pub
+*.rsa

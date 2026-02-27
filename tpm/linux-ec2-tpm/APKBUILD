@@ -1,6 +1,6 @@
 # Maintainer: Natanael Copa <ncopa@alpinelinux.org>
 
-_flavor=${FLAVOR:-lts}
+_flavor=${FLAVOR:-ec2-tpm}
 pkgname=linux-$_flavor
 pkgver=6.18.13
 _kernver=${pkgver%.*}
@@ -9,57 +9,20 @@ pkgdesc="Linux lts kernel"
 url="https://www.kernel.org"
 depends="initramfs-generator"
 _depends_dev="perl gmp-dev mpc1-dev mpfr-dev elfutils-dev bash flex bison zstd"
-makedepends="$_depends_dev sed installkernel bc linux-headers linux-firmware-any openssl-dev>3 mawk
+makedepends="$_depends_dev sed installkernel bc linux-headers openssl-dev>3 mawk
 	diffutils elfutils findutils zstd pahole python3 gcc>=13.1.1_git20230624 bpftool"
 options="!strip !check"
 source="https://cdn.kernel.org/pub/linux/kernel/v${pkgver%%.*}.x/linux-$_kernver.tar.xz
-	0001-powerpc-boot-wrapper-Add-z-notext-flag-for-ppc64le.patch
-	0002-x86-Compress-vmlinux-with-zstd-19-instead-of-22.patch
 	0003-kexec-add-kexec_load_disabled-boot-option.patch
 	0004-objtool-respect-AWK-setting.patch
-	0005-powerpc-config-defang-gcc-check-for-stack-protector-.patch
-	0001-x86-CPU-AMD-avoid-printing-reset-reasons-on-Xen-domU.patch
-	sophgo-fixes.patch
 
-	lts.aarch64.config
-	lts.armv7.config
-	lts.loongarch64.config
-	lts.ppc64le.config
-	lts.riscv64.config
-	lts.s390x.config
-	lts.x86.config
-	lts.x86_64.config
-
-	virt.aarch64.config
-	virt.armv7.config
-	virt.ppc64le.config
-	virt.x86.config
-	virt.x86_64.config
+	ec2-tpm.aarch64.config
 	"
 
-# Allow adding custom flavor config via FLAVOR var
-# The config file should be named ${FLAVOR}.${CARCH}.config
-if [ -n "$FLAVOR" ]; then
-	source="$source
-	${FLAVOR}.${CARCH}.config"
-fi
+# We ship only the main package (no -dev, no -doc)
+subpackages=""
+_flavors="ec2-tpm"
 
-subpackages="$pkgname-dev:_dev:$CBUILD_ARCH $pkgname-doc"
-for _i in $source; do
-	case $_i in
-	*.$CARCH.config)
-		_f=${_i%."$CARCH".config}
-		if [ -n "$FLAVOR" ] && [ "$_f" != "$FLAVOR" ]; then
-			# skip flavors that don't match
-			continue
-		fi
-		_flavors="$_flavors $_f"
-		if [ "linux-$_f" != "$pkgname" ]; then
-			subpackages="$subpackages linux-$_f::$CBUILD_ARCH linux-$_f-dev:_dev:$CBUILD_ARCH"
-		fi
-		;;
-	esac
-done
 builddir="$srcdir"/linux-$_kernver
 
 if [ "${pkgver%.0}" = "$pkgver" ]; then
@@ -264,23 +227,7 @@ _package() {
 
 # main flavor installs in $pkgdir
 package() {
-	depends="$depends linux-firmware-any"
-
 	_package "$_flavor" "$pkgdir"
-
-	# copy files for linux-lts-doc sub package
-	mkdir -p "$pkgdir"/usr/share/doc
-	cp -r "$builddir"/Documentation \
-		"$pkgdir"/usr/share/doc/linux-doc-"$pkgver"/
-	# remove files that aren't part of the documentation itself
-	for nondoc in \
-		.gitignore conf.py docutils.conf \
-		Kconfig Makefile
-	do
-		rm "$pkgdir"/usr/share/doc/linux-doc-"$pkgver"/"$nondoc"
-	done
-	# create /usr/share/doc/linux-doc symlink
-	cd "$pkgdir"/usr/share/doc; ln -s linux-doc-"$pkgver" linux-doc
 }
 
 # subflavors install in $subpkgdir
@@ -361,24 +308,7 @@ _dev() {
 sha512sums="
 cc33f4a83116c0ac91b2c3288eaa6224096f11860aca1ad7ac2ffa5f464bcc5d8dab0df0b3dc4e87c0d5adb905928fad3f96e42084b008836f1c3790d3fde639  patch-6.18.13.patch.xz
 88599ffdec96d150c1feb9b261ba93bb0301a9d0e1ad6bef7aeab1f5372cbfc57d8b43c7e902bd8f76921d1dbd8189663c142ea869e51d0e2b483b150ee00fe0  linux-6.18.tar.xz
-b296717ef0cd63978142b4d47b3bc49faa04daf77e115e702ba611cc254a6e782cdab7d5639e724cd5f029cfb6a3dc33c3036f346d681d1fdfe0df723c7e0321  0001-powerpc-boot-wrapper-Add-z-notext-flag-for-ppc64le.patch
-055e10e7b3e00bb3621389315d5206a8feb5022a1f0dc51c3aa107facfe83d191da05a502a0c62488be7299677a63c1da84f87c42cbf3125788c56db67e810ee  0002-x86-Compress-vmlinux-with-zstd-19-instead-of-22.patch
 e1d2d5358f5b8189236108973395f00eafce8db6d5baaf55025b1360f08ab7cffc930d3818719f220b98e7e8541cc8a7f056611b6e290f224a102c1addbe34ac  0003-kexec-add-kexec_load_disabled-boot-option.patch
 28c83be4c97152001381cd5e3a8acb8552a42d9dac9aaec8f096e3762b7944035aa5a4363fb4602f9bb427c4f72cfd2f996a0a725f7f9e07ab250317985aff9e  0004-objtool-respect-AWK-setting.patch
-5ce79416f8f111c36393718656e3eeb4cb0adccd117dcf661876d1564010e5c58b6351cc4116d187d0a9a838bcca0fecc236d81ac71afb940b89ccb14f21e179  0005-powerpc-config-defang-gcc-check-for-stack-protector-.patch
-4e72af8e77a555d2a850837b64a525a51d5d118048584dc3ea0d0e8620bb56bf56b69a94aa67dac879b841c9ba033e33d94610da0028fde7b6602ad2fe63f02f  0001-x86-CPU-AMD-avoid-printing-reset-reasons-on-Xen-domU.patch
-855522b816bbb2b0738251cf24714c2566c7aacad39aaf6adcebd0a256d11f64ff2762ecdace0ab1bac38db87fd579863f852f799356a368f057c166e4deb03c  sophgo-fixes.patch
-7ca01b7db47e134e430abcb5ff9607bc91a6b15217f4c548415b986f0ad1cc0a90088f34470c14722f006f923a10d35313eefb79744e7614b178a3aa72d70da8  lts.aarch64.config
-b4980153573f79849b242dc18d04108f537b44054c5ffbc8a7e07c099f9c5151cbbd1fd605dd0a7f6efa48a67047355f9b5cc70a8972c1f1a02179fb2e8e12ca  lts.armv7.config
-c97a6e288ace0df6f7df2036b4549a413cad473336f2b30b4b156d1a935028999542adf57691e57071d866f3afac4006a2a2f10bfc5be39724abb6e8b4824282  lts.loongarch64.config
-cc11c0463178ef12587703ca1132c72a1e59eaa716d3dda59fe47964556eb98a5a6df024f1cee807e2b82c009f99f78b9d2a51f7c2a1d8744bdef8e3b6ebd8ca  lts.ppc64le.config
-4957e49bf1f3aca0f585913fd63bc5de78d920d8a7caa245cf6ac38bd27e4b61d15979cfae6e76190da78ea0dbd9aff77c4b2d58b4c72fadedc20f7c7dbd4077  lts.riscv64.config
-46a464e246a858e1c5da293b93703c85101b2d32ddbd56b65394080ba2b964e920add8ce6f45efba3340daf38e725c5a4f00728ce0da1983dde7632da314f0af  lts.s390x.config
-837ac36e3780342bdcef444951341667c8e4b287409ec0ac474716d44d2e5bbb462076d19777e07d45f0e9234f5e35795ed04017924896efc1f411b7197b3ef4  lts.x86.config
-97302bc2df261c72f99ba6fed7d62651421cda41a77c6bc4db16abe86dd58eefa3add61214075952b14cf3ef43b2fe961fee6a614c1e326f5e0a755e41f8eb16  lts.x86_64.config
-6117fd66a620824bafbd72516b9a98f3c3e93783d9005aef7aed075af14ecfff84b938aac5661cdbdd68ceaf20bf2aa3913e72f1592e0014e11115c93f151edf  virt.aarch64.config
-9e9267f0dd05adb15efc3f54dfc14c531dd990beb305ad025596501ec61aebf2fe0896913889ad6bfd1c2a7b05821debcad0f558e99982abc6871e3084b21a33  virt.armv7.config
-98c198718fa62afd164ab423609d2afc1d69233467594e778d17030b2b4029f24e0f55dc8b436b0ebb406919d76b93b74b18f46a2437e8cfe40d440144c67e44  virt.ppc64le.config
-f218044468547105aec8be38618e187731906434225b8a8b5b904d574bcb3156b838288eb0c4acb45b9cb100dc3bda5059ef69354013c89ae0698012963a64c0  virt.x86.config
-8fb9157de3c97f7f3bad088f862f1d73f6efdc85dcfccbbd8ae597d04939e9c2f84366fa32e78f23d9d18b59e013836d66ee45c37ddb7411b35303aed96e60e0  virt.x86_64.config
+a636536aa593ca6a4d9ec799432fdb3de3a4bbe5dd2ab00bbb6d54968e4c13b6f77ef34ec412f0bc775117becee2c7a81b0578ab67893c8a6adb8f36bc863641  ec2-tpm.aarch64.config
 "

@@ -50,7 +50,6 @@ APK_SHA="$(shasum -a 256 "$APK" | awk '{print $1}')"
 CFG_SHA="$(tar -xOf "$APK" "$CFG" | shasum -a 256 | awk '{print $1}')"
 
 # Optional: capture aports branch + flavor (helps explain version drift later)
-APORTS_BRANCH="${APORTS_BRANCH:-${ALPINE_VER}-stable}"
 FLAVOR="${FLAVOR:-ec2-tpm}"
 
 MANIFEST="$OUT_DIR/manifest.txt"
@@ -58,7 +57,6 @@ MANIFEST="$OUT_DIR/manifest.txt"
   echo "apk=$(basename "$APK")"
   echo "apk_sha256=$APK_SHA"
   echo "alpine_ver=$ALPINE_VER"
-  echo "aports_branch=$APORTS_BRANCH"
   echo "flavor=$FLAVOR"
   echo "config_path=$CFG"
   echo "config_sha256=$CFG_SHA"
