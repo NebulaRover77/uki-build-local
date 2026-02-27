@@ -14,8 +14,8 @@ RUN echo "JOBS=$(nproc)" >> /etc/abuild.conf && \
 RUN adduser -D builder && addgroup builder abuild
 
 # Put vendored linux-lts package recipe where abuild expects it
-WORKDIR /aports/main/linux-lts
-COPY linux-lts/ /aports/main/linux-lts/
+WORKDIR /aports/main/linux-ec2-tpm
+COPY linux-ec2-tpm/ /aports/main/linux-ec2-tpm/
 
 # Permissions for building
 RUN chown -R builder:builder /aports
@@ -31,5 +31,5 @@ RUN mkdir -p /etc/apk/keys \
 VOLUME ["/home/builder/.cache/ccache", "/out"]
 
 USER builder
-WORKDIR /aports/main/linux-lts
+WORKDIR /aports/main/linux-ec2-tpm
 CMD ["/bin/sh"]
