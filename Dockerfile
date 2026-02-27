@@ -14,6 +14,19 @@ RUN apk add --no-cache \
     coreutils \
     ca-certificates
 
+RUN apk add --no-cache \
+    binutils \
+    sbsigntool \
+    file \
+    coreutils \
+    ca-certificates \
+    cargo \
+    git
+
+RUN git clone https://github.com/aws/NitroTPM-Tools.git /opt/NitroTPM-Tools \
+ && cd /opt/NitroTPM-Tools/nitro-tpm-pcr-compute \
+ && cargo build --release
+
 WORKDIR /work
 
 # Copy your script into the image

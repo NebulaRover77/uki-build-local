@@ -91,5 +91,30 @@ sbverify --cert "$DB_CRT" "$SIGNED"
 
 install -m 0644 "$SIGNED" "$DEST_EFI"
 
+PCR_TOOL="/opt/NitroTPM-Tools/target/release/nitro-tpm-pcr-compute"
+PCR_JSON="${DEST_EFI}.pcr.json"
+PCR4_FILE="${DEST_EFI}.pcr4"
+SHA384_FILE="${DEST_EFI}.sha384"
+
+if [ -x "$PCR_TOOL" ]; then
+  echo "Computing Nitro PCR4 (SHA384)..."
+
+  "$PCR_TOOL" --image "$DEST_EFI" > "$PCR_JSON"
+
+  # Extract PCR4 value from JSON
+  PCR4="$(awk -F'"' '/"PCR4"/{print $4}' "$PCR_JSON")"
+  echo "$PCR4" > "$PCR4_FILE"
+
+  # Also save raw file SHA384
+  sha384sum "$DEST_EFI" | awk '{print $1}' > "$SHA384_FILE"
+
+  echo "Saved:"
+  echo "  $PCR_JSON"
+  echo "  $PCR4_FILE"
+  echo "  $SHA384_FILE"
+else
+  echo "WARN: nitro-tpm-pcr-compute not found; skipping PCR calculation"
+fi
+
 rm -f "$CMDLINE_FILE" "$UNSIGNED" "$SIGNED"
 echo "OK: wrote signed UKI to $DEST_EFI"
