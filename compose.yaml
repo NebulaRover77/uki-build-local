@@ -6,6 +6,7 @@ services:
     user: "${LOCAL_UID}:${LOCAL_GID}"
     volumes:
       - ../private/shared/infra/target-root:/mnt/target
+      - ../private/shared/infra/kernel/out/uki:/uki
       - ${HOME}/sbkeys/db.key:/tmp/db.key:ro
       - ${HOME}/sbkeys/db.crt:/tmp/db.crt:ro
       - ${HOME}/sbkeys/linuxaa64.efi.stub:/tmp/linuxaa64.efi.stub:ro

@@ -13,7 +13,7 @@ SIGNED=/tmp/BOOTAA64.EFI
 OSREL="${TARGET_ROOT}/etc/os-release"
 VMLINUX="${TARGET_ROOT}/boot/vmlinuz-tpm-ec2"
 INITRD="${TARGET_ROOT}/boot/initramfs-tpm-ec2"
-DEST_DIR="${TARGET_ROOT}/boot/efi/EFI/BOOT"
+DEST_DIR="/uki"
 DEST_EFI="${DEST_DIR}/BOOTAA64.EFI"
 
 die() { echo "ERROR: $*" >&2; exit 1; }
