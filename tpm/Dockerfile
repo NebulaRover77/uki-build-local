@@ -3,28 +3,21 @@
 ARG ALPINE_VER=3.23
 FROM alpine:${ALPINE_VER}
 
-ARG ALPINE_VER
-ARG APORTS_BRANCH
-
 RUN apk update && apk add alpine-sdk git bash ccache ca-certificates tar
 
+# abuild config
 RUN echo "JOBS=$(nproc)" >> /etc/abuild.conf && \
     echo 'CC="ccache gcc"'  >> /etc/abuild.conf && \
     echo 'CXX="ccache g++"' >> /etc/abuild.conf
 
+# Builder user + group
 RUN adduser -D builder && addgroup builder abuild
 
-RUN set -e; \
-    : "${APORTS_BRANCH:=${ALPINE_VER}-stable}"; \
-    git init /aports; \
-    cd /aports; \
-    git remote add origin https://gitlab.alpinelinux.org/alpine/aports.git; \
-    git fetch --depth 1 origin "${APORTS_BRANCH}"; \
-    git checkout -b "${APORTS_BRANCH}" FETCH_HEAD; \
-    git sparse-checkout init --cone; \
-    git sparse-checkout set main/linux-lts
+# Put vendored linux-lts package recipe where abuild expects it
+WORKDIR /aports/main/linux-lts
+COPY linux-lts/ /aports/main/linux-lts/
 
-WORKDIR /aports
+# Permissions for building
 RUN chown -R builder:builder /aports
 
 USER builder
