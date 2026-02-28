@@ -2,7 +2,7 @@ LOCAL_UID := $(shell id -u)
 LOCAL_GID := $(shell id -g)
 
 COMPOSE_RUN := LOCAL_UID=$(LOCAL_UID) LOCAL_GID=$(LOCAL_GID) docker compose run --rm
-SBVERIFY_CMD := sbverify --cert /tmp/db.crt /mnt/target/boot/efi/EFI/BOOT/BOOTAA64.EFI && echo "OK: signature verifies"
+SBVERIFY_CMD := sbverify --cert /tmp/db.crt /uki/BOOTAA64.EFI && echo "OK: signature verifies"
 
 .PHONY: build prepare-target uki-build verify tpm-build
 
