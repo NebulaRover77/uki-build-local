@@ -10,10 +10,10 @@ services:
     volumes:
       - ${OUT_ROOT}/target-root:/mnt/target
       - ${OUT_ROOT}/uki:/uki
-      - ${HOME}/sbkeys/db.key:/tmp/db.key:ro
-      - ${HOME}/sbkeys/db.crt:/tmp/db.crt:ro
-      - ${HOME}/sbkeys/linuxaa64.efi.stub:/tmp/linuxaa64.efi.stub:ro
-      - ${HOME}/sbkeys:/sbkeys:ro
+      - ../private/shared/infra/sbkeys/db.key:/tmp/db.key:ro
+      - ../private/shared/infra/sbkeys/db.crt:/tmp/db.crt:ro
+      - ../private/shared/infra/sbkeys/linuxaa64.efi.stub:/tmp/linuxaa64.efi.stub:ro
+      - ../private/sbkeys:/sbkeys:ro
     restart: "no"
 
   prepare-target:
