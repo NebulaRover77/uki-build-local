@@ -30,13 +30,17 @@ services:
     command:
       - >
         set -eux;
+        apk_path="$$(ls -1t /in/linux-ec2-tpm-latest.apk /in/linux-ec2-tpm-[0-9]*.apk 2>/dev/null | head -n 1)";
+        pub_path="$$(ls -1t /in/linux-ec2-tpm-latest.pub /in/*.pub 2>/dev/null | head -n 1)";
+        test -n "$$apk_path";
+        test -n "$$pub_path";
         rm -rf /mnt/target/*;
         mkdir -p /mnt/target/etc /mnt/target/boot;
-        keyname="$$(tar -tf /in/linux-ec2-tpm-latest.apk | sed -n 's/^\.SIGN\.RSA\.//p' | head -n 1)";
+        keyname="$$(tar -tf "$$apk_path" | sed -n 's/^\.SIGN\.RSA\.//p' | head -n 1)";
         mkdir -p /etc/apk/keys;
-        install -m 0644 /in/linux-ec2-tpm-latest.pub "/etc/apk/keys/$$keyname";
+        install -m 0644 "$$pub_path" "/etc/apk/keys/$$keyname";
         apk update;
-        apk add --no-cache /in/linux-ec2-tpm-latest.apk;
+        apk add --no-cache "$$apk_path";
         cp -L /etc/os-release /mnt/target/etc/os-release;
         cp -a /boot/vmlinuz-tpm-ec2 /mnt/target/boot/vmlinuz-tpm-ec2;
         cp -a /boot/initramfs-tpm-ec2 /mnt/target/boot/initramfs-tpm-ec2;
