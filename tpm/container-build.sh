@@ -4,6 +4,8 @@ set -eu
 FLAVOR="ec2-tpm"
 cd /aports/main/linux-ec2-tpm
 
+PACKAGES_DIR="/home/builder/packages/main/aarch64"
+
 if ! ls /home/builder/.abuild/*.rsa /home/builder/.abuild/*.key >/dev/null 2>&1; then
   abuild-keygen -a -n
 fi
@@ -15,9 +17,17 @@ grep -q "^CONFIG_TCG_CRB=y" "./ec2-tpm.aarch64.config"
 ! grep -q "^CONFIG_SND" "./ec2-tpm.aarch64.config"
 
 FLAVOR="$FLAVOR" abuild checksum
+
+# Clean stale package artifacts before building. A persistent abuild key volume can
+# rotate signing keys over time, and stale APKs signed by old keys may cause
+# `abuild -r` to fail with "UNTRUSTED signature" while updating the local index.
+mkdir -p "$PACKAGES_DIR"
+find "$PACKAGES_DIR" -maxdepth 1 -name 'linux-ec2-tpm-*.apk' -delete
+rm -f "$PACKAGES_DIR"/APKINDEX.tar.gz "$PACKAGES_DIR"/*.SIGN.RSA.*
+
 FLAVOR="$FLAVOR" abuild -r
 
-apkfile="$(ls -1t /home/builder/packages/main/aarch64/linux-ec2-tpm-[0-9]*.apk | head -n 1)"
+apkfile="$(ls -1t "$PACKAGES_DIR"/linux-ec2-tpm-[0-9]*.apk | head -n 1)"
 
 # copy apk out
 cp -f "$apkfile" "/out/$(basename "$apkfile")"
