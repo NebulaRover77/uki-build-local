@@ -7,10 +7,10 @@ SBVERIFY_CMD := sbverify --cert /tmp/db.crt /uki/BOOTAA64.EFI && echo "OK: signa
 .PHONY: build prepare-target uki-build verify tpm-build
 
 build:
-	$(MAKE) prepare-target
-	$(MAKE) uki-build
-	$(MAKE) verify
 	$(MAKE) tpm-build
+	$(MAKE) prepare-target
+	$(MAKE) verify
+	$(MAKE) uki-build
 	$(MAKE) verify
 
 prepare-target:
