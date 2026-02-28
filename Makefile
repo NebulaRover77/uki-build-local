@@ -4,10 +4,10 @@ USER ?= $(shell id -un)
 BUILD_ID_RAW := $(shell git describe --tags --always --dirty 2>/dev/null || echo unknown)
 BUILD_ID := $(shell printf '%s' '$(BUILD_ID_RAW)' | tr -c 'A-Za-z0-9._+-' '_' )
 GIT_HEAD := $(shell git rev-parse HEAD 2>/dev/null || echo unknown)
-OUT_ROOT ?= /tmp/uki-build-$(USER)-$(BUILD_ID)
+OUT_ROOT ?= $(HOME)/tmp/uki-build-$(USER)-$(BUILD_ID)
 
 COMPOSE_RUN := LOCAL_UID=$(LOCAL_UID) LOCAL_GID=$(LOCAL_GID) BUILD_ID=$(BUILD_ID) GIT_HEAD=$(GIT_HEAD) OUT_ROOT=$(OUT_ROOT) docker compose run --rm
-SBVERIFY_CMD := sbverify --cert /tmp/db.crt /uki/BOOTAA64.EFI && echo "OK: signature verifies"
+SBVERIFY_CMD := sbverify --cert $$HOME/tmp/db.crt /uki/BOOTAA64.EFI && echo "OK: signature verifies"
 
 .PHONY: build clean prepare-target uki-build verify tpm-build show-uki-id
 
@@ -25,9 +25,10 @@ clean:
 	rm -f $(OUT_ROOT)/kernel/*.sync-conflict*
 
 show-uki-id:
-	@objcopy -O binary --only-section=.osrel $(OUT_ROOT)/uki/BOOTAA64.EFI /tmp/osrel.$$ && \
-	strings /tmp/osrel.$$ | egrep '^(IMAGE_VERSION|GIT_HEAD)=' && \
-	rm -f /tmp/osrel.$$
+	@mkdir -p $(HOME)/tmp
+	@objcopy -O binary --only-section=.osrel $(OUT_ROOT)/uki/BOOTAA64.EFI $(HOME)/tmp/osrel.$$ && \
+	strings $(HOME)/tmp/osrel.$$ | egrep '^(IMAGE_VERSION|GIT_HEAD)=' && \
+	rm -f $(HOME)/tmp/osrel.$$
 
 prepare-target:
 	$(COMPOSE_RUN) prepare-target

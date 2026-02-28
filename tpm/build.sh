@@ -17,6 +17,15 @@ docker build \
   -f "$SCRIPT_DIR/Dockerfile" \
   "$SCRIPT_DIR"
 
+# Ensure the persistent signing-key volume is writable by the non-root builder user.
+# This avoids failures like:
+#   genrsa: Can't open "/home/builder/.abuild/<key>.rsa" for writing, Permission denied
+docker run --rm \
+  -u root \
+  -v alpine-ec2-tpm-abuild-keys:/home/builder/.abuild \
+  "alpine-ec2-tpm-builder:${ALPINE_VER}" \
+  /bin/sh -c 'mkdir -p /home/builder/.abuild && chown -R builder:builder /home/builder/.abuild'
+
 if [ -t 0 ] && [ -t 1 ]; then
   DOCKER_TTY="-it"
 else
