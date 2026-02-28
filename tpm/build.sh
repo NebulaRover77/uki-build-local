@@ -5,7 +5,9 @@ SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd -P)"
 
 ALPINE_VER="${ALPINE_VER:-3.23}"
-OUT_DIR="${OUT_DIR:-$REPO_DIR/private/kernel/out}"
+OUT_DIR="${OUT_DIR:-$REPO_DIR/.out/kernel}"
+BUILD_ID="$(git -C "$REPO_DIR" describe --tags --always --dirty 2>/dev/null || echo unknown)"
+GIT_HEAD="$(git -C "$REPO_DIR" rev-parse HEAD 2>/dev/null || echo unknown)"
 
 mkdir -p "$OUT_DIR"
 
@@ -15,11 +17,18 @@ docker build \
   -f "$SCRIPT_DIR/Dockerfile" \
   "$SCRIPT_DIR"
 
-docker run --rm -it \
+if [ -t 0 ] && [ -t 1 ]; then
+  DOCKER_TTY="-it"
+else
+  DOCKER_TTY=""
+fi
+
+docker run --rm ${DOCKER_TTY} \
   -u builder \
   -v "$SCRIPT_DIR":/host \
   -v "$OUT_DIR":/out \
   -v alpine-ec2-tpm-ccache:/home/builder/.cache/ccache \
+  -v alpine-ec2-tpm-abuild-keys:/home/builder/.abuild \
   "alpine-ec2-tpm-builder:${ALPINE_VER}" \
   /bin/sh /host/container-build.sh
 
@@ -62,6 +71,8 @@ MANIFEST="$OUT_DIR/manifest.txt"
   echo "config_path=$CFG"
   echo "config_sha256=$CFG_SHA"
   echo "modules_release=$MODREL"
+  echo "build_id=$BUILD_ID"
+  echo "git_head=$GIT_HEAD"
 } > "$MANIFEST"
 
 # Guardrail: ensure modules_release is really present (avoids “success with blank value”)

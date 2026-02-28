@@ -4,12 +4,16 @@ services:
     image: uki-build:alpine
     container_name: uki-build
     user: "${LOCAL_UID}:${LOCAL_GID}"
+    environment:
+      BUILD_ID: "${BUILD_ID}"
+      GIT_HEAD: "${GIT_HEAD}"
     volumes:
-      - ../private/shared/infra/target-root:/mnt/target
-      - ../private/shared/infra/kernel/out/uki:/uki
+      - ${OUT_ROOT}/target-root:/mnt/target
+      - ${OUT_ROOT}/uki:/uki
       - ${HOME}/sbkeys/db.key:/tmp/db.key:ro
       - ${HOME}/sbkeys/db.crt:/tmp/db.crt:ro
       - ${HOME}/sbkeys/linuxaa64.efi.stub:/tmp/linuxaa64.efi.stub:ro
+      - ${HOME}/sbkeys:/sbkeys:ro
     restart: "no"
 
   prepare-target:
@@ -19,8 +23,8 @@ services:
       LOCAL_UID: "${LOCAL_UID}"
       LOCAL_GID: "${LOCAL_GID}"
     volumes:
-      - ../private/shared/infra/target-root:/mnt/target
-      - ../private/shared/infra/kernel/out:/in:ro
+      - ${OUT_ROOT}/target-root:/mnt/target
+      - ${OUT_ROOT}/kernel:/in:ro
     entrypoint: ["/bin/sh", "-lc"]
     command:
       - >

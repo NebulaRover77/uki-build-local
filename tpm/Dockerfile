@@ -21,14 +21,8 @@ COPY linux-ec2-tpm/ /aports/main/linux-ec2-tpm/
 RUN chown -R builder:builder /aports
 
 USER builder
-RUN abuild-keygen -a -n
 
-USER root
-RUN mkdir -p /etc/apk/keys \
- && cp /home/builder/.abuild/*.pub /etc/apk/keys/ \
- && chmod a+r /etc/apk/keys/*
-
-VOLUME ["/home/builder/.cache/ccache", "/out"]
+VOLUME ["/home/builder/.cache/ccache", "/home/builder/.abuild", "/out"]
 
 USER builder
 WORKDIR /aports/main/linux-ec2-tpm
