@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd -P)"
 
 ALPINE_VER="${ALPINE_VER:-3.23}"
