@@ -7,14 +7,18 @@ DB_CRT="${3:-/tmp/db.crt}"
 STUB="${4:-/tmp/linuxaa64.efi.stub}"
 
 CMDLINE_FILE=/tmp/cmdline
+OSREL_FILE=/tmp/os-release.uki
 UNSIGNED=/tmp/BOOTAA64.EFI.unsigned
 SIGNED=/tmp/BOOTAA64.EFI
 
 OSREL="${TARGET_ROOT}/etc/os-release"
 VMLINUX="${TARGET_ROOT}/boot/vmlinuz-tpm-ec2"
 INITRD="${TARGET_ROOT}/boot/initramfs-tpm-ec2"
-DEST_DIR="/uki"
+DEST_DIR="${DEST_DIR:-/uki}"
 DEST_EFI="${DEST_DIR}/BOOTAA64.EFI"
+BUILD_ID="${BUILD_ID:-unknown}"
+GIT_HEAD="${GIT_HEAD:-unknown}"
+SBKEYS_DIR="${SBKEYS_DIR:-/sbkeys}"
 
 die() { echo "ERROR: $*" >&2; exit 1; }
 warn() { echo "WARN:  $*" >&2; }
@@ -64,6 +68,9 @@ need_path_r "$STUB"
 
 install -d "$DEST_DIR"
 
+cp "$OSREL" "$OSREL_FILE"
+printf '\nIMAGE_VERSION=%s\nGIT_HEAD=%s\n' "$BUILD_ID" "$GIT_HEAD" >> "$OSREL_FILE"
+
 printf "%s\n" \
   "root=LABEL=ROOT ro modules=sd-mod,usb-storage,ext4,gpio_pl061,ena console=ttyS0,115200n8 earlycon loglevel=7 ignore_loglevel" \
   > "$CMDLINE_FILE"
@@ -77,7 +84,7 @@ BASE=$((16#${IMAGE_BASE_HEX}))
 vma() { printf '0x%x' "$((BASE + $1))"; }
 
 objcopy \
-  --add-section .osrel="$OSREL"          --change-section-vma .osrel="$(vma 0x20000)" \
+  --add-section .osrel="$OSREL_FILE"     --change-section-vma .osrel="$(vma 0x20000)" \
   --add-section .cmdline="$CMDLINE_FILE" --change-section-vma .cmdline="$(vma 0x30000)" \
   --add-section .linux="$VMLINUX"        --change-section-vma .linux="$(vma 0x2000000)" \
   --add-section .initrd="$INITRD"        --change-section-vma .initrd="$(vma 0x3000000)" \
@@ -99,7 +106,18 @@ SHA384_FILE="${DEST_EFI}.sha384"
 if [ -x "$PCR_TOOL" ]; then
   echo "Computing Nitro PCR4 (SHA384)..."
 
-  "$PCR_TOOL" --image "$DEST_EFI" > "$PCR_JSON"
+  need_path_r "$SBKEYS_DIR/PK.esl"
+  need_path_r "$SBKEYS_DIR/KEK.esl"
+  need_path_r "$SBKEYS_DIR/db.esl"
+  need_path_r "$SBKEYS_DIR/dbx.esl"
+
+  "$PCR_TOOL" \
+    --image "$DEST_EFI" \
+    --PK "$SBKEYS_DIR/PK.esl" \
+    --KEK "$SBKEYS_DIR/KEK.esl" \
+    --db "$SBKEYS_DIR/db.esl" \
+    --dbx "$SBKEYS_DIR/dbx.esl" \
+    > "$PCR_JSON"
 
   # Extract PCR4 value from JSON
   PCR4="$(awk -F'"' '/"PCR4"/{print $4}' "$PCR_JSON")"
@@ -116,5 +134,5 @@ else
   echo "WARN: nitro-tpm-pcr-compute not found; skipping PCR calculation"
 fi
 
-rm -f "$CMDLINE_FILE" "$UNSIGNED" "$SIGNED"
+rm -f "$CMDLINE_FILE" "$OSREL_FILE" "$UNSIGNED" "$SIGNED"
 echo "OK: wrote signed UKI to $DEST_EFI"
