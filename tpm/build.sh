@@ -12,11 +12,12 @@ mkdir -p "$OUT_DIR"
 docker build \
   -t "alpine-ec2-tpm-builder:${ALPINE_VER}" \
   --build-arg "ALPINE_VER=${ALPINE_VER}" \
-  .
+  -f "$SCRIPT_DIR/Dockerfile" \
+  "$SCRIPT_DIR"
 
 docker run --rm -it \
   -u builder \
-  -v "$PWD":/host \
+  -v "$SCRIPT_DIR":/host \
   -v "$OUT_DIR":/out \
   -v alpine-ec2-tpm-ccache:/home/builder/.cache/ccache \
   "alpine-ec2-tpm-builder:${ALPINE_VER}" \
