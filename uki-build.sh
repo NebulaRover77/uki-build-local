@@ -1,15 +1,17 @@
 #!/bin/sh
 set -euo pipefail
 
-TARGET_ROOT="${1:-/mnt/target}"
-DB_KEY="${2:-/tmp/db.key}"
-DB_CRT="${3:-/tmp/db.crt}"
-STUB="${4:-/tmp/linuxaa64.efi.stub}"
+HOME="${HOME:-/home/builder}"
 
-CMDLINE_FILE=/tmp/cmdline
-OSREL_FILE=/tmp/os-release.uki
-UNSIGNED=/tmp/BOOTAA64.EFI.unsigned
-SIGNED=/tmp/BOOTAA64.EFI
+TARGET_ROOT="${1:-/mnt/target}"
+DB_KEY="${2:-$HOME/tmp/db.key}"
+DB_CRT="${3:-$HOME/tmp/db.crt}"
+STUB="${4:-$HOME/tmp/linuxaa64.efi.stub}"
+
+CMDLINE_FILE="$HOME/tmp/cmdline"
+OSREL_FILE="$HOME/tmp/os-release.uki"
+UNSIGNED="$HOME/tmp/BOOTAA64.EFI.unsigned"
+SIGNED="$HOME/tmp/BOOTAA64.EFI"
 
 OSREL="${TARGET_ROOT}/etc/os-release"
 VMLINUX="${TARGET_ROOT}/boot/vmlinuz-tpm-ec2"
@@ -66,7 +68,7 @@ need_path_r "$DB_KEY"
 need_path_r "$DB_CRT"
 need_path_r "$STUB"
 
-install -d "$DEST_DIR"
+install -d "$HOME/tmp" "$DEST_DIR"
 
 cp "$OSREL" "$OSREL_FILE"
 printf '\nIMAGE_VERSION=%s\nGIT_HEAD=%s\n' "$BUILD_ID" "$GIT_HEAD" >> "$OSREL_FILE"

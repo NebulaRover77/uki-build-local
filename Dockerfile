@@ -36,8 +36,8 @@ RUN chmod +x /usr/local/bin/uki-build.sh
 # Default mount points / expected paths
 # You will typically mount:
 #  - /mnt/target (rootfs that contains /etc/os-release, /boot/vmlinuz-*, /boot/initramfs-*, etc.)
-#  - /tmp inputs (db.key, db.crt, stub) OR pass different paths as args
+#  - /home/builder/tmp inputs (db.key, db.crt, stub) OR pass different paths as args
 VOLUME ["/mnt/target"]
 
 ENTRYPOINT ["/usr/local/bin/uki-build.sh"]
-CMD ["/mnt/target", "/tmp/db.key", "/tmp/db.crt", "/tmp/linuxaa64.efi.stub"]
+CMD ["/mnt/target", "/home/builder/tmp/db.key", "/home/builder/tmp/db.crt", "/home/builder/tmp/linuxaa64.efi.stub"]

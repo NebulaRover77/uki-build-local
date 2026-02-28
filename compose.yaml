@@ -5,14 +5,15 @@ services:
     container_name: uki-build
     user: "${LOCAL_UID}:${LOCAL_GID}"
     environment:
+      HOME: "/home/builder"
       BUILD_ID: "${BUILD_ID}"
       GIT_HEAD: "${GIT_HEAD}"
     volumes:
       - ${OUT_ROOT}/target-root:/mnt/target
       - ${OUT_ROOT}/uki:/uki
-      - ../private/shared/infra/sbkeys/db.key:/tmp/db.key:ro
-      - ../private/shared/infra/sbkeys/db.crt:/tmp/db.crt:ro
-      - ../private/shared/infra/sbkeys/linuxaa64.efi.stub:/tmp/linuxaa64.efi.stub:ro
+      - ../private/shared/infra/sbkeys/db.key:/home/builder/tmp/db.key:ro
+      - ../private/shared/infra/sbkeys/db.crt:/home/builder/tmp/db.crt:ro
+      - ../private/shared/infra/sbkeys/linuxaa64.efi.stub:/home/builder/tmp/linuxaa64.efi.stub:ro
       - ../private/sbkeys:/sbkeys:ro
     restart: "no"
 
