@@ -6,22 +6,30 @@ cd /aports/main/linux-ec2-tpm
 
 PACKAGES_DIR="/home/builder/packages/main/aarch64"
 
-ABUILD_KEY_NAME="${ABUILD_KEY_NAME:-build-000001}"
 ABUILD_DIR="/home/builder/.abuild"
+ABUILD_KEY_NAME="${ABUILD_KEY_NAME:-build-000001}"
+
+# Your mounted long-lived key
 PRIV="$ABUILD_DIR/${ABUILD_KEY_NAME}.rsa"
+PUB="$ABUILD_DIR/${ABUILD_KEY_NAME}.rsa.pub"
 
-# Require the long-lived key (do not auto-generate random keys)
-[ -f "$PRIV" ] || {
-  echo "ERROR: missing $PRIV (expected long-lived abuild key)" >&2
-  ls -la "$ABUILD_DIR" >&2 || true
-  exit 1
-}
+# Alias name you want baked into the APK signature
+ALIAS="build_key"
+ALIAS_PRIV="$ABUILD_DIR/${ALIAS}.rsa"
+ALIAS_PUB="$ABUILD_DIR/${ALIAS}.rsa.pub"
 
-# Create/pin abuild.conf locally inside the container (no host mount needed)
-CONF="$ABUILD_DIR/abuild.conf"
-if [ ! -f "$CONF" ] || ! grep -q "PACKAGER_PRIVKEY=\"$PRIV\"" "$CONF" 2>/dev/null; then
-  printf 'PACKAGER_PRIVKEY="%s"\n' "$PRIV" > "$CONF"
-fi
+# Require real key material
+[ -f "$PRIV" ] || { echo "ERROR: missing $PRIV"; exit 1; }
+[ -f "$PUB"  ] || { echo "ERROR: missing $PUB";  exit 1; }
+
+# Create/refresh alias filenames (same key material, different names)
+cp -f "$PRIV" "$ALIAS_PRIV"
+cp -f "$PUB"  "$ALIAS_PUB"
+chmod 600 "$ALIAS_PRIV"
+chmod 644 "$ALIAS_PUB"
+
+# Pin abuild.conf to the alias private key so signing uses ALIAS_PUB name
+printf 'PACKAGER_PRIVKEY="%s"\n' "$ALIAS_PRIV" > "$ABUILD_DIR/abuild.conf"
 
 FLAVOR="$FLAVOR" abuild checksum
 
