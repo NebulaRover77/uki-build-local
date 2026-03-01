@@ -39,3 +39,21 @@ apkfile="$(ls -1t "$PACKAGES_DIR"/linux-ec2-tpm-[0-9]*.apk | head -n 1)"
 # copy apk out
 cp -f "$apkfile" "/out/$(basename "$apkfile")"
 ln -sf "$(basename "$apkfile")" /out/linux-ec2-tpm-latest.apk
+
+# export signing pubkey that matches the .SIGN.RSA.* inside the apk
+sigfile="$(tar -tf "$apkfile" | awk '/^\.SIGN\.RSA\./ {print; exit}')"
+[ -n "$sigfile" ] || { echo "ERROR: no .SIGN.RSA.* found in $apkfile"; exit 1; }
+
+keyname="${sigfile#.SIGN.RSA.}"
+[ -f "$ABUILD_DIR/$keyname" ] || {
+  echo "ERROR: missing $ABUILD_DIR/$keyname" >&2
+  ls -la "$ABUILD_DIR" >&2
+  exit 1
+}
+
+# Keep the "true" key name around (optional, but good for debugging)
+cp -f "$ABUILD_DIR/$keyname" "/out/$keyname"
+ln -sf -- "$keyname" /out/linux-ec2-tpm-latest.pub
+
+# Stable, canonical name for downstream consumers (AMI builder, prepare-target, etc.)
+cp -f "$ABUILD_DIR/$keyname" /out/build_key.rsa.pub

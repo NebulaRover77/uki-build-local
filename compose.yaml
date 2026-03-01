@@ -22,11 +22,10 @@ services:
     environment:
       LOCAL_UID: "${LOCAL_UID}"
       LOCAL_GID: "${LOCAL_GID}"
-      ABUILD_KEY_NAME: "${ABUILD_KEY_NAME}"
     volumes:
       - ${OUT_ROOT}/target-root:/mnt/target
       - ${OUT_ROOT}/kernel:/in:ro
-      - ./private/abuildkeys/${ABUILD_KEY_NAME}.rsa.pub:/etc/apk/keys/${ABUILD_KEY_NAME}.rsa.pub:ro
+      - ${OUT_ROOT}/kernel/build_key.rsa.pub://etc/apk/keys/build_key.rsa.pub:ro
     entrypoint: ["/bin/sh", "-lc"]
     command:
       - >
@@ -35,7 +34,7 @@ services:
         test -n "$$apk_path";
         rm -rf /mnt/target/*;
         mkdir -p /mnt/target/etc /mnt/target/boot;
-        test -r "/etc/apk/keys/$${ABUILD_KEY_NAME}.rsa.pub";
+        test -r "/in/build_key.rsa.pub";
         apk update;
         apk add --no-cache "$$apk_path";
         cp -L /etc/os-release /mnt/target/etc/os-release;
