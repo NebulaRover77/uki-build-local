@@ -5,8 +5,8 @@ SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd -P)"
 
 ALPINE_VER="${ALPINE_VER:-3.23}"
-OUT_DIR="${OUT_DIR:-$REPO_DIR/.out/kernel}"
 BUILD_ID="$(git -C "$REPO_DIR" describe --tags --always --dirty 2>/dev/null || echo unknown)"
+OUT_DIR="${OUT_DIR:-$REPO_DIR/private/uki-build-$(BUILD_ID)/kernel}"
 GIT_HEAD="$(git -C "$REPO_DIR" rev-parse HEAD 2>/dev/null || echo unknown)"
 
 mkdir -p "$OUT_DIR"
