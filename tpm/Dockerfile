@@ -17,6 +17,10 @@ RUN adduser -D builder && addgroup builder abuild
 WORKDIR /aports/main/linux-ec2-tpm
 COPY linux-ec2-tpm/ /aports/main/linux-ec2-tpm/
 
+# Ensure builder has a writable abuild home (important when we bind-mount only key files)
+RUN mkdir -p /home/builder/.abuild /home/builder/packages && \
+    chown -R builder:builder /home/builder
+
 # Permissions for building
 RUN chown -R builder:builder /aports
 
