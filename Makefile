@@ -1,26 +1,24 @@
 LOCAL_UID := $(shell id -u)
 LOCAL_GID := $(shell id -g)
 USER ?= $(shell id -un)
-BUILD_ID := $(shell git describe --tags --always --dirty 2>/dev/null || echo unknown)
-GIT_HEAD := $(shell git rev-parse HEAD 2>/dev/null || echo unknown)
+BUILD_ID ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo unknown)
+GIT_HEAD ?= $(shell git rev-parse HEAD 2>/dev/null || echo unknown)
 OUT_ROOT ?= ./private/uki-build-$(BUILD_ID)
-
-COMPOSE_RUN := LOCAL_UID=$(LOCAL_UID) LOCAL_GID=$(LOCAL_GID) BUILD_ID=$(BUILD_ID) GIT_HEAD=$(GIT_HEAD) OUT_ROOT=$(OUT_ROOT) docker compose run --rm
-SBVERIFY_CMD := sbverify --cert /tmp/db.crt /uki/BOOTAA64.EFI && echo "OK: signature verifies"
 
 ABUILD_KEY_SCRIPT := ./scripts/init-abuild-key.sh
 ABUILD_KEY_DIR := ./private/abuildkeys
 ABUILD_KEY_NAME ?= build-000001
-ABUILD_KEY_DIR  := ./private/abuildkeys
 ABUILD_KEY_PRIV := $(ABUILD_KEY_DIR)/$(ABUILD_KEY_NAME).rsa
 ABUILD_KEY_PUB  := $(ABUILD_KEY_DIR)/$(ABUILD_KEY_NAME).rsa.pub
 ABUILD_KEY_CONF := $(ABUILD_KEY_DIR)/abuild.conf
 
-LATEST_LINK := ./private/uki-build-latest
+COMPOSE_RUN = LOCAL_UID=$(LOCAL_UID) LOCAL_GID=$(LOCAL_GID) BUILD_ID=$(BUILD_ID) GIT_HEAD=$(GIT_HEAD) OUT_ROOT=$(OUT_ROOT) ABUILD_KEY_NAME=$(ABUILD_KEY_NAME) docker compose run --rm
+SBVERIFY_CMD = sbverify --cert /tmp/db.crt /uki/BOOTAA64.EFI && echo "OK: signature verifies"
 
 .PHONY: build clean prepare-target uki-build verify tpm-build show-uki-id abuild-key link-latest
 
 build:
+	@echo "BUILD_ID=$(BUILD_ID)"
 	mkdir -p $(OUT_ROOT)/kernel $(OUT_ROOT)/target-root $(OUT_ROOT)/uki
 	$(MAKE) tpm-build
 	$(MAKE) prepare-target
@@ -58,6 +56,5 @@ verify:
 	$(COMPOSE_RUN) --entrypoint /bin/sh uki-build -lc '$(SBVERIFY_CMD)'
 
 link-latest:
-	@mkdir -p "$(PRIVATE_DIR)"
 	@echo "Updating latest symlink -> $(OUT_ROOT)"
-	@cd "$(PRIVATE_DIR)" && ln -sfn "$(OUT_NAME)" "$(LATEST_NAME)"
+	@cd ./private && ln -sfn "$(notdir $(OUT_ROOT))" uki-build-latest
