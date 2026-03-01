@@ -34,7 +34,7 @@ services:
         test -n "$$apk_path";
         rm -rf /mnt/target/*;
         mkdir -p /mnt/target/etc /mnt/target/boot;
-        test -r "/in/build_key.rsa.pub";
+        test -r "/etc/apk/keys/build_key.rsa.pub";
         apk update;
         apk add --no-cache "$$apk_path";
         cp -L /etc/os-release /mnt/target/etc/os-release;

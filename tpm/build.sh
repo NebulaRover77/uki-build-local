@@ -16,7 +16,6 @@ ABUILD_KEY_NAME="${ABUILD_KEY_NAME:-build-000001}"
 
 ABUILD_PRIV="$ABUILD_KEY_DIR/${ABUILD_KEY_NAME}.rsa"
 ABUILD_PUB="$ABUILD_KEY_DIR/${ABUILD_KEY_NAME}.rsa.pub"
-ABUILD_CONF="$ABUILD_KEY_DIR/abuild.conf"
 
 mkdir -p "$OUT_DIR"
 mkdir -p "$ABUILD_KEY_DIR"
@@ -24,13 +23,6 @@ mkdir -p "$ABUILD_KEY_DIR"
 # Guardrails: fail early if key material isn't present.
 [ -f "$ABUILD_PRIV" ] || { echo "ERROR: missing $ABUILD_PRIV (run: make abuild-key)"; exit 1; }
 [ -f "$ABUILD_PUB"  ] || { echo "ERROR: missing $ABUILD_PUB (run: make abuild-key)"; exit 1; }
-[ -f "$ABUILD_CONF" ] || { echo "ERROR: missing $ABUILD_CONF (run: make abuild-key)"; exit 1; }
-
-grep -q "PACKAGER_PRIVKEY=\"$ABUILD_CONT_DIR/$ABUILD_KEY_NAME.rsa\"" "$ABUILD_CONF" || {
-  echo "ERROR: $ABUILD_CONF does not match ABUILD_KEY_NAME=$ABUILD_KEY_NAME" >&2
-  echo "Expected: PACKAGER_PRIVKEY=\"$ABUILD_CONT_DIR/$ABUILD_KEY_NAME.rsa\"" >&2
-  exit 1
-}
 
 docker build \
   -t "alpine-ec2-tpm-builder:${ALPINE_VER}" \
@@ -53,7 +45,7 @@ docker run --rm ${DOCKER_TTY} \
   -v "$OUT_DIR":/out \
   -v "$ABUILD_PRIV:$ABUILD_CONT_DIR/${ABUILD_KEY_NAME}.rsa:ro" \
   -v "$ABUILD_PUB:$ABUILD_CONT_DIR/${ABUILD_KEY_NAME}.rsa.pub:ro" \
-  -v "$ABUILD_PUB:/etc/apk/keys/${ABUILD_KEY_NAME}.rsa.pub:ro" \
+  -v "$ABUILD_PUB:/etc/apk/keys/build_key.rsa.pub:ro" \
   -v alpine-ec2-tpm-ccache:/home/builder/.cache/ccache \
   "alpine-ec2-tpm-builder:${ALPINE_VER}" \
   /bin/sh /host/container-build.sh
