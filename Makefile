@@ -58,5 +58,6 @@ verify:
 	$(COMPOSE_RUN) --entrypoint /bin/sh uki-build -lc '$(SBVERIFY_CMD)'
 
 link-latest:
+	@mkdir -p "$(PRIVATE_DIR)"
 	@echo "Updating latest symlink -> $(OUT_ROOT)"
-	@ln -sfn "$(OUT_ROOT)" "$(LATEST_LINK)"
+	@cd "$(PRIVATE_DIR)" && ln -sfn "$(OUT_NAME)" "$(LATEST_NAME)"
