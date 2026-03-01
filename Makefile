@@ -16,7 +16,9 @@ ABUILD_KEY_PRIV := $(ABUILD_KEY_DIR)/$(ABUILD_KEY_NAME).rsa
 ABUILD_KEY_PUB  := $(ABUILD_KEY_DIR)/$(ABUILD_KEY_NAME).rsa.pub
 ABUILD_KEY_CONF := $(ABUILD_KEY_DIR)/abuild.conf
 
-.PHONY: build clean prepare-target uki-build verify tpm-build show-uki-id abuild-key
+LATEST_LINK := ./private/uki-build-latest
+
+.PHONY: build clean prepare-target uki-build verify tpm-build show-uki-id abuild-key link-latest
 
 build:
 	mkdir -p $(OUT_ROOT)/kernel $(OUT_ROOT)/target-root $(OUT_ROOT)/uki
@@ -24,6 +26,7 @@ build:
 	$(MAKE) prepare-target
 	$(MAKE) uki-build
 	$(MAKE) verify
+	$(MAKE) link-latest
 
 clean:
 	rm -rf $(OUT_ROOT)/uki/*
@@ -53,3 +56,7 @@ tpm-build: abuild-key
 
 verify:
 	$(COMPOSE_RUN) --entrypoint /bin/sh uki-build -lc '$(SBVERIFY_CMD)'
+
+link-latest:
+	@echo "Updating latest symlink -> $(OUT_ROOT)"
+	@ln -sfn "$(OUT_ROOT)" "$(LATEST_LINK)"
